@@ -1,3 +1,4 @@
+from typing import Type
 from flask import Flask, request, Response
 import json
 import sqlite3
@@ -68,7 +69,7 @@ def read_record():
     else:
         try:
             query_condition = """ where student_id={}""".format(int(request.args.get("student_id")))
-        except KeyError:
+        except TypeError:
             return app.response_class(json.dumps({"error_message": "Student ID not provided"}), status=400,
                                       mimetype='application/json')
         except ValueError:
