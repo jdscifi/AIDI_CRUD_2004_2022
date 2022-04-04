@@ -57,9 +57,11 @@ def create_record():
 
 @app.route('/read', methods=["GET", "POST"])
 def read_record():
-    if request.method == "POST" or request.method == "GET":
+    if request.args.get("student_id") == "*":
+        query_condition = ""
+    else:
         try:
-            student_id = int(request.args.get("student_id"))
+            query_condition = """ where student_id={}""".format(int(request.args.get("student_id")))
         except KeyError:
             return app.response_class(json.dumps({"error_message": "Student ID not provided"}), status=400, mimetype='application/json')
         except ValueError:
@@ -68,11 +70,12 @@ def read_record():
         with sqlite3.connect(DATABASE) as connection:
             connection.row_factory = sqlite3.Row
             db = connection.cursor()
-            db.execute("""SELECT * FROM 'student_info' where student_id={};""".format(student_id))
-            query_output = db.fetchone()
+            db.execute("""SELECT * FROM 'student_info'{}""".format(query_condition))
+            query_output = db.fetchall()
             if len(query_output) == 0:
                 return app.response_class(response=json.dumps({"message": "No Record Found"}), status=200, mimetype='application/json')
-        return app.response_class(response=json.dumps({"record": dict(query_output)}), status=200, mimetype='application/json')
+            response = [dict(record) for record in query_output]
+        return app.response_class(response=json.dumps({"records": response}), status=200, mimetype='application/json')
     except Exception as e:
         return app.response_class(response=json.dumps({"error_message": "Error Retrieving Record", "execption": str(e)}), status=500, mimetype='application/json')
 
