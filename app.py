@@ -2,7 +2,6 @@ from flask import Flask, request, Response
 import json
 import sqlite3
 import datetime as dt
-import copy
 
 app = Flask(__name__)
 
@@ -89,4 +88,4 @@ def delete_record():
 
 
 if __name__ == '__main__':
-    app.run(host="127.0.0.2", port=9000, debug=True)
+    app.run()
