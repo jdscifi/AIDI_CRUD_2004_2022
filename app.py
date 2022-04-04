@@ -11,13 +11,19 @@ DATA_SKELETON = {"first_name": str, "last_name": str, "dob": str, "amount_due": 
 
 @app.route('/')
 def index():
-    return 'Hello World!'
+    return app.response_class(json.dumps({"apis": [{"create": {"data": "DATA_SKELETON", "method": [""]}},
+                                                   {"read": {"data": {"student_id": ["*(for all records)", "integer"]},
+                                                             "method": ["POST", "GET"]}},
+                                                   {"update": {"data": {"student_id": "int",
+                                                                        "*fields_to_be_modified": "new values"},
+                                                               "method": ["PUT"]}},
+                                                   {"delete": {"data": {"student_id": "int", "method": ["DELETE"]}}}
+                                                   ]}), status=200, mimetype='application/json')
 
 
 @app.route('/create', methods=["POST"])
 def create_record():
     request_data = dict(request.args)
-    # return app.response_class(json.dumps({"error_message": request_data}), status=400, mimetype='application/json')
     expected_keys = set(DATA_SKELETON.keys())
     received_keys = set(request_data.keys())
     if expected_keys != received_keys:
@@ -63,9 +69,11 @@ def read_record():
         try:
             query_condition = """ where student_id={}""".format(int(request.args.get("student_id")))
         except KeyError:
-            return app.response_class(json.dumps({"error_message": "Student ID not provided"}), status=400, mimetype='application/json')
+            return app.response_class(json.dumps({"error_message": "Student ID not provided"}), status=400,
+                                      mimetype='application/json')
         except ValueError:
-            return app.response_class(json.dumps({"error_message": "Invalid Student ID"}), status=400, mimetype='application/json')
+            return app.response_class(json.dumps({"error_message": "Invalid Student ID"}), status=400,
+                                      mimetype='application/json')
     try:
         with sqlite3.connect(DATABASE) as connection:
             connection.row_factory = sqlite3.Row
@@ -73,11 +81,14 @@ def read_record():
             db.execute("""SELECT * FROM 'student_info'{}""".format(query_condition))
             query_output = db.fetchall()
             if len(query_output) == 0:
-                return app.response_class(response=json.dumps({"message": "No Record Found"}), status=200, mimetype='application/json')
+                return app.response_class(response=json.dumps({"message": "No Record Found"}), status=200,
+                                          mimetype='application/json')
             response = [dict(record) for record in query_output]
         return app.response_class(response=json.dumps({"records": response}), status=200, mimetype='application/json')
     except Exception as e:
-        return app.response_class(response=json.dumps({"error_message": "Error Retrieving Record", "execption": str(e)}), status=500, mimetype='application/json')
+        return app.response_class(
+            response=json.dumps({"error_message": "Error Retrieving Record", "execption": str(e)}), status=500,
+            mimetype='application/json')
 
 
 @app.route('/update', methods=["PUT"])
