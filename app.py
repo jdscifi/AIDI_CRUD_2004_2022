@@ -58,7 +58,7 @@ def create_record():
                                   mimetype='application/json')
     except Exception as e:
         return app.response_class(
-            response=json.dumps({"error_message": "Error Creating New Record", "execption": str(e)}), status=344,
+            response=json.dumps({"error_message": "Error Creating New Record", "execption": str(e)}), status=502,
             mimetype='application/json')
 
 
@@ -88,14 +88,13 @@ def read_record():
         return app.response_class(response=json.dumps({"records": response}), status=200, mimetype='application/json')
     except Exception as e:
         return app.response_class(
-            response=json.dumps({"error_message": "Error Retrieving Record", "execption": str(e)}), status=500,
+            response=json.dumps({"error_message": "Error Retrieving Record", "execption": str(e)}), status=502,
             mimetype='application/json')
 
 
-@app.route('/update', methods=["PUT"])
+@app.route('/update', methods=["PUT", "POST"])
 def update_record():
     request_data = dict(request.args)
-
     try:
         student_id = int(request.args.get("student_id"))
     except TypeError:
@@ -106,23 +105,28 @@ def update_record():
     sql_query = "UPDATE 'student_info' set "
     for key, value in request_data.items():
         if key in list(DATA_SKELETON.keys()):
+            if key == "amount_due":
+                try:
+                    value= float(value)
+                except ValueError:
+                    return app.response_class(json.dumps({"error_message": "Invalid Value for 'amount_due'"}), status=400, mimetype='application/json')
             sql_query += f"{key} = {value}"
 
-    sql_query += f"where ID = {student_id}"
-    
+    sql_query += f" where student_id = {student_id}"
+
     try:
         with sqlite3.connect(DATABASE, isolation_level='EXCLUSIVE', timeout=10) as connection:
             db = connection.cursor()
             db.execute(sql_query)
-        return app.response_class(response=json.dumps({"message": "Student ID {student_id} Record Deleted"}), status=201,
+        return app.response_class(response=json.dumps({"message": f"Student ID {student_id} Record Deleted"}), status=200,
                                   mimetype='application/json')
     except Exception as e:
         return app.response_class(
-            response=json.dumps({"error_message": "Error Updating New Record", "execption": str(e)}), status=344,
+            response=json.dumps({"error_message": "Error Updating Record", "execption": str(e)}), status=502,
             mimetype='application/json')
 
 
-@app.route('/delete', methods=["DELETE"])
+@app.route('/delete', methods=["DELETE", "POST"])
 def delete_record():
     try:
         student_id = int(request.args.get("student_id"))
@@ -134,12 +138,12 @@ def delete_record():
     try:
         with sqlite3.connect(DATABASE, isolation_level='EXCLUSIVE', timeout=10) as connection:
             db = connection.cursor()
-            db.execute("DELETE from users WHERE user_id = ?", (student_id,))
-        return app.response_class(response=json.dumps({"message": f"Student ID {student_id} Record Deleted"}), status=201,
+            db.execute(f"DELETE from student_info WHERE student_id = {student_id}")
+        return app.response_class(response=json.dumps({"message": f"Student ID {student_id} Record Deleted"}), status=200,
                                   mimetype='application/json')
     except Exception as e:
         return app.response_class(
-            response=json.dumps({"error_message": "Error Updating New Record", "execption": str(e)}), status=344,
+            response=json.dumps({"error_message": "Error Deleting Record", "execption": str(e)}), status=502,
             mimetype='application/json')
 
 
