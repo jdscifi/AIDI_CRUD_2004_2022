@@ -54,7 +54,7 @@ def create_record():
                 """INSERT INTO 'student_info' ('first_name','last_name','dob','amount_due') VALUES('{}','{}','{}',{});""".format(
                     request_data['first_name'], request_data['last_name'], request_data['dob'],
                     request_data['amount_due']))
-        return app.response_class(response=json.dumps({"message": "New Record Created"}), status=201,
+        return app.response_class(response=json.dumps({"message": "New Record Created", "student_id": db.lastrowid}), status=201,
                                   mimetype='application/json')
     except Exception as e:
         return app.response_class(
