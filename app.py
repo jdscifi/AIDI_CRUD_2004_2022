@@ -119,7 +119,7 @@ def update_record():
         with sqlite3.connect(DATABASE, isolation_level='EXCLUSIVE', timeout=10) as connection:
             db = connection.cursor()
             db.execute(sql_query)
-        return app.response_class(response=json.dumps({"message": f"Student ID {student_id} Record Deleted"}), status=200,
+        return app.response_class(response=json.dumps({"message": f"Student ID {student_id} Record Updated"}), status=200,
                                   mimetype='application/json')
     except Exception as e:
         return app.response_class(
